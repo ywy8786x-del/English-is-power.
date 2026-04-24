@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مطار دمشق الدولي - Smart Dictionary</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
         :root {
             --dark-green: #064e3b;
@@ -34,14 +38,14 @@
 
         header {
             text-align: center;
-            padding: 30px 15px; /* تقليل الحشو للهاتف */
+            padding: 30px 15px;
             background: var(--glass);
             backdrop-filter: blur(10px);
             border-bottom: 2px solid var(--gold);
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        header h1 { font-size: 1.8rem; margin-bottom: 5px; } /* حجم خط أنسب للهاتف */
+        header h1 { font-size: 1.8rem; margin-bottom: 5px; }
         header p { font-size: 0.9rem; margin-top: 0; }
 
         .menu-btn {
@@ -104,7 +108,7 @@
         .words-container {
             max-width: 800px;
             margin: auto;
-            padding: 10px 15px 80px 15px; /* مساحة في الأسفل لراحة التصفح */
+            padding: 10px 15px 80px 15px;
         }
 
         .word-card {
@@ -141,11 +145,10 @@
             width: 32px;
             height: 32px;
             border-radius: 5px;
-            margin-left: 10px; /* تعديل الهامش ليتناسب مع الاتجاه */
+            margin-left: 10px;
             cursor: pointer;
         }
 
-        /* نافذة Admin المحدثة - متوافقة مع الهاتف */
         .admin-modal {
             display: none;
             position: fixed;
@@ -178,7 +181,6 @@
             backdrop-filter: blur(5px);
         }
 
-        /* تحسينات إضافية للهواتف الصغيرة جداً */
         @media (max-width: 400px) {
             header h1 { font-size: 1.4rem; }
             .word-card { flex-direction: column; align-items: flex-start; gap: 15px; }
@@ -220,27 +222,47 @@
             <input type="text" id="newEn" placeholder="الكلمة (English)" onkeypress="handleWordAdd(event)">
             <input type="text" id="newAr" placeholder="الترجمة (عربي)" onkeypress="handleWordAdd(event)">
             <button onclick="addWord()">إضافة للقاعدة <i class="fas fa-plus"></i></button>
-            <div style="margin-top:15px; font-size: 0.85rem; color: #666; border-top: 1px solid #eee; pt: 10px;">
+            <div style="margin-top:15px; font-size: 0.85rem; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
                 <p>عدد المتصلين الآن: <strong id="onlineCount">42</strong></p>
-                <p>حالة النظام: <span style="color:green">نشط</span></p>
+                <p>حالة النظام: <span style="color:green">نشط سحابياً</span></p>
             </div>
             <button onclick="closeAdmin()" style="background:#666; margin-top:5px;">إغلاق</button>
         </div>
     </div>
 
     <script>
-        let dictionary = [
-            { id: 1, en: "Passport", ar: "جواز سفر" },
-            { id: 2, en: "Boarding Pass", ar: "تذكرة صعود" },
-            { id: 3, en: "Terminal", ar: "مبنى الركاب" },
-            { id: 4, en: "Flight Attendant", ar: "مضيف طيران" }
-            { id: 5, en: "Customs", ar: "الجمارك" },
-            { id: 6, en: "Take-off", ar: "إقلاع" },
-           ];
-     
+        // --- إعدادات Firebase (ضع بياناتك هنا) ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
 
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let dictionary = [];
         let isAdmin = false;
         const ADMIN_PASS = "amjadalrefaay.xx";
+
+        // وظيفة جلب البيانات الحية (تحدث القائمة عند الجميع فوراً)
+        db.ref('words').on('value', (snapshot) => {
+            const data = snapshot.val();
+            dictionary = [];
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    dictionary.push({ id: key, ...data[key] });
+                });
+            }
+            // ترتيب من الأحدث للأقدم
+            dictionary.sort((a, b) => b.timestamp - a.timestamp);
+            displayWords(dictionary);
+        });
 
         function displayWords(data) {
             const list = document.getElementById('wordsList');
@@ -249,7 +271,7 @@
                 list.innerHTML += `
                     <div class="word-card">
                         <div style="display:flex; align-items:center;">
-                            ${isAdmin ? `<button class="btn-delete" onclick="deleteWord(${item.id})"><i class="fas fa-trash"></i></button>` : ''}
+                            ${isAdmin ? `<button class="btn-delete" onclick="deleteWord('${item.id}')"><i class="fas fa-trash"></i></button>` : ''}
                             <div>
                                 <div style="color:var(--gold); font-weight:bold; font-size:1.1rem">${item.en}</div>
                                 <div style="opacity:0.8; font-size: 0.95rem;">${item.ar}</div>
@@ -307,7 +329,6 @@
             }
         }
 
-        // وظيفة الدخول لقاعدة البيانات برمز سري
         function accessDatabase() {
             const pass = prompt("الرجاء إدخال رمز الوصول لقاعدة البيانات:");
             if (pass === ADMIN_PASS) {
@@ -353,26 +374,28 @@
 
         function handleWordAdd(e) { if(e.key === 'Enter') addWord(); }
 
+        // إضافة الكلمة للسحاب (Firebase) لتظهر عند الجميع
         function addWord() {
             const en = document.getElementById('newEn').value;
             const ar = document.getElementById('newAr').value;
             if(en && ar) {
-                dictionary.unshift({id: Date.now(), en, ar});
-                displayWords(dictionary);
+                db.ref('words').push({
+                    en: en,
+                    ar: ar,
+                    timestamp: Date.now()
+                });
                 document.getElementById('newEn').value = '';
                 document.getElementById('newAr').value = '';
                 document.getElementById('newEn').focus();
             }
         }
 
+        // حذف الكلمة من السحاب (Firebase)
         function deleteWord(id) {
             if(confirm("هل أنت متأكد من حذف هذه الكلمة؟")) {
-                dictionary = dictionary.filter(i => i.id !== id);
-                displayWords(dictionary);
+                db.ref('words/' + id).remove();
             }
         }
-
-        displayWords(dictionary);
     </script>
 </body>
 </html>
