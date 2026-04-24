@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مطار دمشق الدولي - Smart Dictionary</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --dark-green: #064e3b;
+            --neon-green: #10b981;
+            --gold: #fbbf24;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: radial-gradient(circle at center, #065f46 0%, #022c22 100%);
+            color: white;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 200%; height: 200%;
+            background: repeating-radial-gradient(rgba(16, 185, 129, 0.05) 0%, transparent 10%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 15px; /* تقليل الحشو للهاتف */
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--gold);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        header h1 { font-size: 1.8rem; margin-bottom: 5px; } /* حجم خط أنسب للهاتف */
+        header p { font-size: 0.9rem; margin-top: 0; }
+
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--gold);
+            color: var(--dark-green);
+            width: 45px; height: 45px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 1000;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0; right: -300px;
+            width: 280px; height: 100%;
+            background: rgba(2, 44, 34, 0.98);
+            backdrop-filter: blur(15px);
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+            padding-top: 80px;
+        }
+
+        .side-menu a {
+            display: block; padding: 15px 25px;
+            color: white; text-decoration: none;
+            border-bottom: 1px solid var(--glass);
+            transition: 0.3s;
+            font-size: 1.1rem;
+        }
+
+        .side-menu a:hover { background: var(--neon-green); padding-right: 35px; }
+
+        .search-box {
+            max-width: 600px;
+            margin: 20px auto;
+            position: relative;
+            padding: 0 15px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 2px solid var(--neon-green);
+            background: rgba(0,0,0,0.4);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        #searchInput:focus { box-shadow: 0 0 15px var(--neon-green); }
+
+        .words-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 10px 15px 80px 15px; /* مساحة في الأسفل لراحة التصفح */
+        }
+
+        .word-card {
+            background: var(--glass);
+            border-left: 4px solid var(--gold);
+            margin-bottom: 12px;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .word-card:hover { transform: translateY(-2px); background: rgba(255,255,255,0.15); }
+
+        .audio-controls { display: flex; gap: 8px; }
+
+        .btn-audio {
+            background: var(--neon-green);
+            border: none; color: white;
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .btn-audio.slow { background: var(--gold); color: black; }
+
+        .btn-delete {
+            background: #ff4d4d;
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 5px;
+            margin-left: 10px; /* تعديل الهامش ليتناسب مع الاتجاه */
+            cursor: pointer;
+        }
+
+        /* نافذة Admin المحدثة - متوافقة مع الهاتف */
+        .admin-modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; color: #333;
+            padding: 25px; border-radius: 20px;
+            z-index: 1001; width: 85%; max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .admin-modal input {
+            width: 100%; padding: 12px;
+            margin: 8px 0; border: 1px solid #ddd;
+            border-radius: 8px; box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .admin-modal button {
+            width: 100%; padding: 12px;
+            background: var(--dark-green); color: white;
+            border: none; border-radius: 8px; cursor: pointer;
+            font-size: 1rem; font-weight: bold; margin-top: 10px;
+        }
+
+        .overlay {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        /* تحسينات إضافية للهواتف الصغيرة جداً */
+        @media (max-width: 400px) {
+            header h1 { font-size: 1.4rem; }
+            .word-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .audio-controls { align-self: flex-end; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-btn" onclick="toggleMenu(event)"><i class="fas fa-plane-departure"></i></div>
+
+    <div id="sideMenu" class="side-menu">
+        <a href="https://wa.me/qr/NBDQM2NOF2WFH1?text=الكلمة: %0Aالترجمة: " target="_blank"><i class="fab fa-whatsapp"></i> إضافة كلمة</a>
+        <a href="#" onclick="showAdmin()"><i class="fas fa-user-shield"></i> لوحة التحكم Admin</a>
+        <a href="#" onclick="accessDatabase()"><i class="fas fa-database"></i> قاعدة البيانات</a>
+    </div>
+
+    <header>
+        <h1><i class="fas fa-broadcast-tower"></i> مطار دمشق الدولي</h1>
+        <p>بوابة تعلم مصطلحات الطيران العالمية</p>
+        <p style="font-size: 0.85rem; color: var(--gold); opacity: 0.9; margin-top: 5px;">🪪 هوية المطور: أبو محمد الخاني</p>
+    </header>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="ابحث بالإنجليزية أو العربية..." onkeyup="filterWords()">
+    </div>
+
+    <div class="words-container" id="wordsList"></div>
+
+    <div class="overlay" id="overlay" onclick="closeAdmin()"></div>
+    
+    <div id="adminPanel" class="admin-modal">
+        <h2 id="adminTitle" style="margin-top:0; font-size: 1.3rem; text-align: center;">تسجيل دخول المسؤول</h2>
+        <div id="loginSection">
+            <input type="password" id="adminPass" placeholder="كلمة المرور..." onkeypress="handleAdminLogin(event)">
+            <button onclick="loginAdmin()">دخول</button>
+        </div>
+        <div id="controlSection" style="display:none;">
+            <input type="text" id="newEn" placeholder="الكلمة (English)" onkeypress="handleWordAdd(event)">
+            <input type="text" id="newAr" placeholder="الترجمة (عربي)" onkeypress="handleWordAdd(event)">
+            <button onclick="addWord()">إضافة للقاعدة <i class="fas fa-plus"></i></button>
+            <div style="margin-top:15px; font-size: 0.85rem; color: #666; border-top: 1px solid #eee; pt: 10px;">
+                <p>عدد المتصلين الآن: <strong id="onlineCount">42</strong></p>
+                <p>حالة النظام: <span style="color:green">نشط</span></p>
+            </div>
+            <button onclick="closeAdmin()" style="background:#666; margin-top:5px;">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+        let dictionary = [
+            { id: 1, en: "Passport", ar: "جواز سفر" },
+            { id: 2, en: "Boarding Pass", ar: "تذكرة صعود" },
+            { id: 3, en: "Terminal", ar: "مبنى الركاب" },
+            { id: 4, en: "Flight Attendant", ar: "مضيف طيران" },
+            { id: 5, en: "Customs", ar: "الجمارك" }
+        ];
+
+        let isAdmin = false;
+        const ADMIN_PASS = "amjadalrefaay.xx";
+
+        function displayWords(data) {
+            const list = document.getElementById('wordsList');
+            list.innerHTML = '';
+            data.forEach((item) => {
+                list.innerHTML += `
+                    <div class="word-card">
+                        <div style="display:flex; align-items:center;">
+                            ${isAdmin ? `<button class="btn-delete" onclick="deleteWord(${item.id})"><i class="fas fa-trash"></i></button>` : ''}
+                            <div>
+                                <div style="color:var(--gold); font-weight:bold; font-size:1.1rem">${item.en}</div>
+                                <div style="opacity:0.8; font-size: 0.95rem;">${item.ar}</div>
+                            </div>
+                        </div>
+                        <div class="audio-controls">
+                            <button class="btn-audio" title="نطق عادي" onclick="speak('${item.en}', 1)">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <button class="btn-audio slow" title="نطق بطيء" onclick="speak('${item.en}', 0.6)">
+                                <i class="fas fa-turtle"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterWords() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = dictionary.filter(i => i.en.toLowerCase().includes(q) || i.ar.includes(q));
+            displayWords(filtered);
+        }
+
+        function speak(text, rate) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-GB';
+            msg.rate = rate;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function toggleMenu(event) {
+            if (event) event.stopPropagation();
+            const m = document.getElementById('sideMenu');
+            m.style.right = m.style.right === '0px' ? '-300px' : '0px';
+        }
+
+        document.addEventListener('click', function(event) {
+            const m = document.getElementById('sideMenu');
+            const btn = document.querySelector('.menu-btn');
+            if (m && !m.contains(event.target) && btn && !btn.contains(event.target)) {
+                m.style.right = '-300px';
+            }
+        });
+
+        function showAdmin() {
+            if(isAdmin) {
+                openAdminPanel();
+            } else {
+                resetAdminModal();
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('adminPass').focus();
+            }
+        }
+
+        // وظيفة الدخول لقاعدة البيانات برمز سري
+        function accessDatabase() {
+            const pass = prompt("الرجاء إدخال رمز الوصول لقاعدة البيانات:");
+            if (pass === ADMIN_PASS) {
+                alert("تم التحقق بنجاح. يمكنك الآن عرض وإدارة البيانات.");
+                showAdmin();
+            } else if (pass !== null) {
+                alert("رمز الوصول خاطئ!");
+            }
+        }
+
+        function resetAdminModal() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('controlSection').style.display = 'none';
+            document.getElementById('adminTitle').innerText = "تسجيل دخول المسؤول";
+            document.getElementById('adminPass').value = '';
+        }
+
+        function openAdminPanel() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('controlSection').style.display = 'block';
+            document.getElementById('adminTitle').innerText = "إدارة الكلمات";
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeAdmin() {
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function handleAdminLogin(e) { if(e.key === 'Enter') loginAdmin(); }
+        
+        function loginAdmin() {
+            const pass = document.getElementById('adminPass').value;
+            if(pass === ADMIN_PASS) {
+                isAdmin = true;
+                openAdminPanel();
+                displayWords(dictionary);
+            } else {
+                alert("كلمة مرور خاطئة");
+            }
+        }
+
+        function handleWordAdd(e) { if(e.key === 'Enter') addWord(); }
+
+        function addWord() {
+            const en = document.getElementById('newEn').value;
+            const ar = document.getElementById('newAr').value;
+            if(en && ar) {
+                dictionary.unshift({id: Date.now(), en, ar});
+                displayWords(dictionary);
+                document.getElementById('newEn').value = '';
+                document.getElementById('newAr').value = '';
+                document.getElementById('newEn').focus();
+            }
+        }
+
+        function deleteWord(id) {
+            if(confirm("هل أنت متأكد من حذف هذه الكلمة؟")) {
+                dictionary = dictionary.filter(i => i.id !== id);
+                displayWords(dictionary);
+            }
+        }
+
+        displayWords(dictionary);
+    </script>
+</body>
+</html>
