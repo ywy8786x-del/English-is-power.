@@ -193,7 +193,7 @@
     <div class="menu-btn" onclick="toggleMenu(event)"><i class="fas fa-plane-departure"></i></div>
 
     <div id="sideMenu" class="side-menu">
-        <a href="https://wa.me/qr/NBDQM2NOF2WFH1?text=الكلمة: %0Aالترجمة: " target="_blank"><i class="fab fa-whatsapp"></i> إضافة كلمة</a>
+        <a href="https://wa.me/qr/NBDQM2NOF2WFH1" target="_blank"><i class="fab fa-whatsapp"></i> التواصل مع المطور</a>
         <a href="#" onclick="showAdmin()"><i class="fas fa-user-shield"></i> لوحة التحكم Admin</a>
         <a href="#" onclick="accessDatabase()"><i class="fas fa-database"></i> قاعدة البيانات</a>
     </div>
@@ -230,7 +230,6 @@
     </div>
 
     <script>
-        // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyAse2_VyhcdVBsQWrgz66bsMFbjvxzND-g",
             authDomain: "damascus-airport.firebaseapp.com",
@@ -241,7 +240,6 @@
             appId: "1:1060753600565:web:d008c239c3f54b291ac17c"
         };
 
-        // تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -249,7 +247,6 @@
         let isAdmin = false;
         const ADMIN_PASS = "amjadalrefaay.xx";
 
-        // استماع فوري لأي تغيير في قاعدة البيانات
         db.ref('words').on('value', (snapshot) => {
             const data = snapshot.val();
             dictionary = [];
@@ -258,7 +255,6 @@
                     dictionary.push({ id: key, ...data[key] });
                 });
             }
-            // ترتيب الكلمات من الأحدث للأقدم
             dictionary.sort((a, b) => b.timestamp - a.timestamp);
             displayWords(dictionary);
         });
@@ -277,7 +273,7 @@
                             </div>
                         </div>
                         <div class="audio-controls">
-                            <button class="btn-audio" onclick="speak('${item.en}', 1)"><i class="fas fa-volume-up"></i></button>
+                            <button class="btn-audio" onclick="speak('${item.en}', 0.9)"><i class="fas fa-volume-up"></i></button>
                             <button class="btn-audio slow" onclick="speak('${item.en}', 0.6)"><i class="fas fa-turtle"></i></button>
                         </div>
                     </div>
@@ -285,7 +281,6 @@
             });
         }
 
-        // إرسال الكلمة لـ Firebase
         function addWord() {
             const en = document.getElementById('newEn').value;
             const ar = document.getElementById('newAr').value;
@@ -302,24 +297,34 @@
             }
         }
 
-        // حذف الكلمة من Firebase
         function deleteWord(id) {
             if(confirm("هل أنت متأكد من حذف هذه الكلمة نهائياً؟")) {
                 db.ref('words/' + id).remove();
             }
         }
 
-        // بقية الوظائف (البحث، النطق، القائمة الجانبية)
         function filterWords() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             const filtered = dictionary.filter(i => i.en.toLowerCase().includes(q) || i.ar.includes(q));
             displayWords(filtered);
         }
 
+        // دالة النطق المحسنة بلكنة بريطانية
         function speak(text, rate) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-GB'; msg.rate = rate;
+            
+            // محاولة العثور على أفضل صوت بريطاني متاح في الجهاز
+            const voices = window.speechSynthesis.getVoices();
+            const britishVoice = voices.find(v => v.lang === 'en-GB' || v.name.includes('United Kingdom'));
+            
+            if (britishVoice) {
+                msg.voice = britishVoice;
+            }
+            
+            msg.lang = 'en-GB';
+            msg.rate = rate;
+            msg.pitch = 1;
             window.speechSynthesis.speak(msg);
         }
 
@@ -329,15 +334,10 @@
             m.style.right = m.style.right === '0px' ? '-300px' : '0px'; 
         }
 
-        // الوظيفة المطلوبة: إغلاق القائمة عند النقر خارجها
         document.addEventListener('click', function(event) {
             const sideMenu = document.getElementById('sideMenu');
             const menuBtn = document.querySelector('.menu-btn');
-            
-            // إذا كانت القائمة مفتوحة والنقر تم خارجها وخارج زر الطائرة
-            if (sideMenu.style.right === '0px' && 
-                !sideMenu.contains(event.target) && 
-                !menuBtn.contains(event.target)) {
+            if (sideMenu.style.right === '0px' && !sideMenu.contains(event.target) && !menuBtn.contains(event.target)) {
                 sideMenu.style.right = '-300px';
             }
         });
@@ -349,6 +349,9 @@
         function handleAdminLogin(e) { if(e.key === 'Enter') loginAdmin(); }
         function handleWordAdd(e) { if(e.key === 'Enter') addWord(); }
         function accessDatabase() { if (prompt("رمز الوصول:") === ADMIN_PASS) showAdmin(); }
+
+        // تحميل الأصوات مسبقاً لضمان الجاهزية
+        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
     </script>
 </body>
 </html>
