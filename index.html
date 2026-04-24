@@ -323,7 +323,25 @@
             window.speechSynthesis.speak(msg);
         }
 
-        function toggleMenu(e) { if(e) e.stopPropagation(); const m = document.getElementById('sideMenu'); m.style.right = m.style.right === '0px' ? '-300px' : '0px'; }
+        function toggleMenu(e) { 
+            if(e) e.stopPropagation(); 
+            const m = document.getElementById('sideMenu'); 
+            m.style.right = m.style.right === '0px' ? '-300px' : '0px'; 
+        }
+
+        // الوظيفة المطلوبة: إغلاق القائمة عند النقر خارجها
+        document.addEventListener('click', function(event) {
+            const sideMenu = document.getElementById('sideMenu');
+            const menuBtn = document.querySelector('.menu-btn');
+            
+            // إذا كانت القائمة مفتوحة والنقر تم خارجها وخارج زر الطائرة
+            if (sideMenu.style.right === '0px' && 
+                !sideMenu.contains(event.target) && 
+                !menuBtn.contains(event.target)) {
+                sideMenu.style.right = '-300px';
+            }
+        });
+
         function showAdmin() { resetAdminModal(); document.getElementById('adminPanel').style.display = 'block'; document.getElementById('overlay').style.display = 'block'; document.getElementById('adminPass').focus(); }
         function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
         function resetAdminModal() { document.getElementById('loginSection').style.display = 'block'; document.getElementById('controlSection').style.display = 'none'; }
