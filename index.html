@@ -219,9 +219,9 @@
             <button onclick="loginAdmin()">دخول</button>
         </div>
         <div id="controlSection" style="display:none;">
-            <input type="text" id="newEn" placeholder="الكلمة (English)" onkeypress="handleWordAdd(event)">
-            <input type="text" id="newAr" placeholder="الترجمة (عربي)" onkeypress="handleWordAdd(event)">
-            <button onclick="addWord()">إضافة للقاعدة <i class="fas fa-plus"></i></button>
+            <input type="text" id="newEn" placeholder="الكلمة (English)" lang="en" autocapitalize="none" onkeypress="handleWordNav(event, 'newAr')">
+            <input type="text" id="newAr" placeholder="الترجمة (عربي)" lang="ar" onkeypress="handleWordNav(event, 'addBtn')">
+            <button id="addBtn" onclick="addWord()">إضافة للقاعدة <i class="fas fa-plus"></i></button>
             <div style="margin-top:15px; font-size: 0.85rem; color: #666; border-top: 1px solid #eee; pt: 10px;">
                 <p>حالة النظام: <span style="color:green">متصل بالسحاب</span></p>
             </div>
@@ -274,7 +274,7 @@
                         </div>
                         <div class="audio-controls">
                             <button class="btn-audio" onclick="speak('${item.en}', 0.9)"><i class="fas fa-volume-up"></i></button>
-                            <button class="btn-audio slow" onclick="speak('${item.en}', 0.6)"><i class="fas fa-turtle"></i></button>
+                            <button class="btn-audio slow" onclick="speak('${item.en}', 0.6)"><i class="fas fa-snail"></i></button>
                         </div>
                     </div>
                 `;
@@ -297,6 +297,17 @@
             }
         }
 
+        function handleWordNav(e, nextId) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                if(nextId === 'addBtn') {
+                    addWord();
+                } else {
+                    document.getElementById(nextId).focus();
+                }
+            }
+        }
+
         function deleteWord(id) {
             if(confirm("هل أنت متأكد من حذف هذه الكلمة نهائياً؟")) {
                 db.ref('words/' + id).remove();
@@ -309,19 +320,12 @@
             displayWords(filtered);
         }
 
-        // دالة النطق المحسنة بلكنة بريطانية
         function speak(text, rate) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
-            
-            // محاولة العثور على أفضل صوت بريطاني متاح في الجهاز
             const voices = window.speechSynthesis.getVoices();
             const britishVoice = voices.find(v => v.lang === 'en-GB' || v.name.includes('United Kingdom'));
-            
-            if (britishVoice) {
-                msg.voice = britishVoice;
-            }
-            
+            if (britishVoice) msg.voice = britishVoice;
             msg.lang = 'en-GB';
             msg.rate = rate;
             msg.pitch = 1;
@@ -342,15 +346,38 @@
             }
         });
 
-        function showAdmin() { resetAdminModal(); document.getElementById('adminPanel').style.display = 'block'; document.getElementById('overlay').style.display = 'block'; document.getElementById('adminPass').focus(); }
-        function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
-        function resetAdminModal() { document.getElementById('loginSection').style.display = 'block'; document.getElementById('controlSection').style.display = 'none'; }
-        function loginAdmin() { if(document.getElementById('adminPass').value === ADMIN_PASS) { isAdmin = true; document.getElementById('loginSection').style.display = 'none'; document.getElementById('controlSection').style.display = 'block'; displayWords(dictionary); } else { alert("خطأ!"); } }
+        function showAdmin() { 
+            resetAdminModal(); 
+            document.getElementById('adminPanel').style.display = 'block'; 
+            document.getElementById('overlay').style.display = 'block'; 
+            document.getElementById('adminPass').focus(); 
+        }
+
+        function closeAdmin() { 
+            document.getElementById('adminPanel').style.display = 'none'; 
+            document.getElementById('overlay').style.display = 'none'; 
+        }
+
+        function resetAdminModal() { 
+            document.getElementById('loginSection').style.display = 'block'; 
+            document.getElementById('controlSection').style.display = 'none'; 
+        }
+
+        function loginAdmin() { 
+            if(document.getElementById('adminPass').value === ADMIN_PASS) { 
+                isAdmin = true; 
+                document.getElementById('loginSection').style.display = 'none'; 
+                document.getElementById('controlSection').style.display = 'block'; 
+                setTimeout(() => document.getElementById('newEn').focus(), 100);
+                displayWords(dictionary); 
+            } else { 
+                alert("خطأ!"); 
+            } 
+        }
+
         function handleAdminLogin(e) { if(e.key === 'Enter') loginAdmin(); }
-        function handleWordAdd(e) { if(e.key === 'Enter') addWord(); }
         function accessDatabase() { if (prompt("رمز الوصول:") === ADMIN_PASS) showAdmin(); }
 
-        // تحميل الأصوات مسبقاً لضمان الجاهزية
         window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
     </script>
 </body>
