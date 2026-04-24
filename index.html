@@ -453,11 +453,12 @@
             displayWords(dictionary);
         });
 
+        // تم التعديل هنا فقط حسب طلبك لمنع الوميض واختفاء الكلمات
         function displayWords(data) {
             const list = document.getElementById('wordsList');
-            list.innerHTML = '';
+            let content = ''; // نجمع كل الكلمات هنا أولاً
             data.forEach((item) => {
-                list.innerHTML += `
+                content += `
                     <div class="word-card">
                         <div style="display:flex; align-items:center;">
                             ${isAdmin && item.id ? `<button class="btn-delete" onclick="deleteWord('${item.id}')"><i class="fas fa-trash"></i></button>` : ''}
@@ -473,6 +474,7 @@
                     </div>
                 `;
             });
+            list.innerHTML = content; // نعرضها دفعة واحدة لكي لا تختفي وترمش الشاشة
         }
 
         function addWord() {
