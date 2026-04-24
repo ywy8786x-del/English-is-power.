@@ -36,36 +36,37 @@
             z-index: -1;
         }
 
-        /* رسالة ترحيب متطورة تظهر لمدة 5 ثواني */
+        /* رسالة ترحيب مطورة - مدة ثانيتين وحجم أصغر */
         #welcomeOverlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(2, 44, 34, 0.95);
+            background: rgba(2, 44, 34, 0.85);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 5000;
-            transition: opacity 1s ease-out, visibility 1s;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
         }
 
         .welcome-content {
             text-align: center;
-            padding: 40px;
-            border-radius: 30px;
+            padding: 25px 50px;
+            border-radius: 20px;
             background: var(--glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--gold);
-            box-shadow: 0 0 50px rgba(16, 185, 129, 0.2);
-            animation: pulseWelcome 2s infinite;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            animation: pulseWelcome 1.5s infinite;
+            max-width: 80%;
         }
 
         .welcome-content i {
-            font-size: 4rem;
+            font-size: 2.5rem;
             color: var(--gold);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .welcome-content h2 {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             margin: 0;
             background: linear-gradient(to right, #fbbf24, #10b981);
             -webkit-background-clip: text;
@@ -75,7 +76,7 @@
 
         @keyframes pulseWelcome {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.03); }
         }
 
         .custom-toast {
@@ -300,19 +301,21 @@
         </div>
         <div id="controlSection" style="display:none;">
             <input type="text" id="newEn" placeholder="الكلمة أو الجملة (English)" lang="en">
-            <input type="text" id="newAr" placeholder="الترجمة (عربي)" lang="ar">
+            <input type="text" id="newAr" placeholder="الترجمة (عربي)" lang="ar" onkeypress="handleAddKey(event)">
             <button id="addBtn" onclick="addWord()">إضافة للقاعدة <i class="fas fa-plus"></i></button>
             <button onclick="closeAdmin()" style="background:#666; margin-top:5px;">إغلاق</button>
         </div>
     </div>
 
     <script>
-        // إخفاء رسالة الترحيب بعد 5 ثواني
+        // إخفاء رسالة الترحيب بعد ثانيتين فقط
         setTimeout(() => {
             const welcome = document.getElementById('welcomeOverlay');
-            welcome.style.opacity = '0';
-            setTimeout(() => { welcome.style.visibility = 'hidden'; }, 1000);
-        }, 5000);
+            if(welcome){
+                welcome.style.opacity = '0';
+                setTimeout(() => { welcome.style.visibility = 'hidden'; }, 800);
+            }
+        }, 2000);
 
         const firebaseConfig = {
             apiKey: "AIzaSyAse2_VyhcdVBsQWrgz66bsMFbjvxzND-g",
@@ -435,6 +438,7 @@
             { id: "loc_105", en: "Remove", ar: "أزل" },
             { id: "loc_106", en: "Wallet", ar: "محفظة" },
             { id: "loc_107", en: "Drugs / Medicine", ar: "أدوية" },
+            { id: "loc_108", Carney: "تقرير طبي" },
             { id: "loc_108", en: "Medical report", ar: "تقرير طبي" },
             { id: "loc_109", en: "Stay", ar: "ابق مكانك" },
             { id: "loc_110", en: "Come forward", ar: "تقدم للأمام" },
@@ -502,12 +506,9 @@
             const data = snapshot.val();
             let firebaseWords = [];
             if (data) {
-                // تحويل البيانات لمصفوفة لسهولة التحكم في الترتيب
                 firebaseWords = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                // عكس الترتيب لتظهر الإضافات الجديدة من الأدمن في البداية
                 firebaseWords.reverse();
             }
-            // دمج الكلمات الجديدة أولاً ثم الكلمات الأساسية
             dictionary = [...firebaseWords, ...baseWords];
             displayWords(dictionary);
         });
@@ -578,6 +579,10 @@
         }
 
         function handleAdminLogin(e) { if(e.key === 'Enter') loginAdmin(); }
+        
+        // وظيفة الضغط على Enter في خانة الإضافة
+        function handleAddKey(e) { if(e.key === 'Enter') addWord(); }
+
         function accessDatabase() { if (prompt("رمز الوصول:") === ADMIN_PASS) showAdmin(); }
         
         function addWord() {
@@ -587,6 +592,7 @@
                 db.ref('words').push({ en, ar, timestamp: Date.now() }).then(() => {
                     document.getElementById('newEn').value = '';
                     document.getElementById('newAr').value = '';
+                    document.getElementById('newEn').focus(); // إعادة التركيز للخانة الأولى لسرعة الإدخال
                 });
             }
         }
