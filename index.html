@@ -36,59 +36,46 @@
             z-index: -1;
         }
 
-        /* تعديل أنميشن الطائرة لتظهر مرة واحدة واللافتة ترفرف بواقعية */
-        .plane-animation {
+        /* رسالة ترحيب متطورة تظهر لمدة 5 ثواني */
+        #welcomeOverlay {
             position: fixed;
-            top: 15%;
-            left: -100%;
-            display: flex;
-            align-items: center;
-            z-index: 2000;
-            pointer-events: none;
-            /* تم التعديل لتظهر مرة واحدة فقط 1 بدلاً من infinite */
-            animation: flyRealistic 25s linear 1 forwards; 
-            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.7));
-            perspective: 1200px;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 44, 34, 0.95);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 5000;
+            transition: opacity 1s ease-out, visibility 1s;
         }
 
-        .plane-icon {
-            font-size: 80px;
-            color: #ffffff;
-            text-shadow: 0 0 30px var(--neon-green);
-            position: relative;
-            z-index: 5;
-            transform: rotate(10deg);
+        .welcome-content {
+            text-align: center;
+            padding: 40px;
+            border-radius: 30px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--gold);
+            box-shadow: 0 0 50px rgba(16, 185, 129, 0.2);
+            animation: pulseWelcome 2s infinite;
         }
 
-        .plane-banner {
-            background: linear-gradient(135deg, #fbbf24 0%, #d97706 50%, #fbbf24 100%);
-            background-size: 200% 100%;
-            color: #064e3b;
-            padding: 15px 40px;
-            border-radius: 2px 8px 8px 2px;
+        .welcome-content i {
+            font-size: 4rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+
+        .welcome-content h2 {
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(to right, #fbbf24, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             font-weight: 900;
-            white-space: nowrap;
-            font-size: 1.6rem;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            border: 2px solid rgba(255,255,255,0.4);
-            /* أنيميشن الرفرفة من الطرف الحر */
-            animation: realisticWave 1.2s ease-in-out infinite;
-            margin-left: -10px;
-            transform-origin: right center; /* الرفرفة تبدأ من الطرف البعيد عن الطائرة */
         }
 
-        @keyframes flyRealistic {
-            0% { left: -50%; transform: translateY(0) rotate(5deg); }
-            50% { transform: translateY(-50px) rotate(0deg); }
-            100% { left: 150%; transform: translateY(0) rotate(-5deg); }
-        }
-
-        @keyframes realisticWave {
-            0%, 100% { transform: rotateX(0deg) skewY(0deg) scaleX(1); }
-            25% { transform: rotateX(10deg) skewY(1deg) scaleX(1.02); }
-            50% { transform: rotateX(-10deg) skewY(-1deg) scaleX(0.98); }
-            75% { transform: rotateX(5deg) skewY(0.5deg) scaleX(1.01); }
+        @keyframes pulseWelcome {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .custom-toast {
@@ -267,9 +254,11 @@
 </head>
 <body onclick="closeMenuIfOutside(event)">
 
-    <div class="plane-animation">
-        <i class="fas fa-plane plane-icon"></i>
-        <div class="plane-banner">Welcome onboard</div>
+    <div id="welcomeOverlay">
+        <div class="welcome-content">
+            <i class="fas fa-passport"></i>
+            <h2>Welcome onboard</h2>
+        </div>
     </div>
 
     <div id="toast" class="custom-toast">
@@ -318,6 +307,13 @@
     </div>
 
     <script>
+        // إخفاء رسالة الترحيب بعد 5 ثواني
+        setTimeout(() => {
+            const welcome = document.getElementById('welcomeOverlay');
+            welcome.style.opacity = '0';
+            setTimeout(() => { welcome.style.visibility = 'hidden'; }, 1000);
+        }, 5000);
+
         const firebaseConfig = {
             apiKey: "AIzaSyAse2_VyhcdVBsQWrgz66bsMFbjvxzND-g",
             authDomain: "damascus-airport.firebaseapp.com",
@@ -504,12 +500,15 @@
 
         db.ref('words').on('value', (snapshot) => {
             const data = snapshot.val();
-            dictionary = [...baseWords];
+            let firebaseWords = [];
             if (data) {
-                Object.keys(data).forEach(key => {
-                    dictionary.push({ id: key, ...data[key] });
-                });
+                // تحويل البيانات لمصفوفة لسهولة التحكم في الترتيب
+                firebaseWords = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                // عكس الترتيب لتظهر الإضافات الجديدة من الأدمن في البداية
+                firebaseWords.reverse();
             }
+            // دمج الكلمات الجديدة أولاً ثم الكلمات الأساسية
+            dictionary = [...firebaseWords, ...baseWords];
             displayWords(dictionary);
         });
 
