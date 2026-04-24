@@ -377,6 +377,7 @@
                 { en: "Valid", ar: "صالح" },
                 { en: "Entrance", ar: "مدخل" },
                 { en: "Crowded", ar: "مزدحم" },
+                { en: "Trays", ar: "صواني" },
                 { en: "Building", ar: "مبنى" },
                 { en: "The apron", ar: "ساحة المطار" },
                 { en: "On board", ar: "على متن الطائرة" },
@@ -422,16 +423,18 @@
                 { en: "went", ar: "ذهبتُ (ماضي)" }
             ];
 
-            if(confirm("هل تريد إضافة الكلمات من الأوراق إلى قاعدة البيانات؟")) {
-                wordsToImport.forEach(item => {
-                    db.ref('words').push({
-                        en: item.en,
-                        ar: item.ar,
-                        timestamp: Date.now()
+            // فحص إذا كانت البيانات موجودة مسبقاً لتجنب التكرار العشوائي
+            db.ref('words').once('value', snapshot => {
+                if (!snapshot.exists() || snapshot.numChildren() < 10) {
+                    wordsToImport.forEach(item => {
+                        db.ref('words').push({
+                            en: item.en,
+                            ar: item.ar,
+                            timestamp: Date.now()
+                        });
                     });
-                });
-                alert("تم استيراد الكلمات بنجاح!");
-            }
+                }
+            });
         }
 
         function deleteWord(id) {
@@ -505,6 +508,9 @@
         function accessDatabase() { if (prompt("رمز الوصول:") === ADMIN_PASS) showAdmin(); }
 
         window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+
+        // تشغيل الاستيراد تلقائياً عند فتح الصفحة
+        importAllData();
     </script>
 </body>
 </html>
