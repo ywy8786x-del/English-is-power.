@@ -6,8 +6,8 @@
     <title>مطار دمشق الدولي - Smart Dictionary</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -223,23 +223,22 @@
             <input type="text" id="newAr" placeholder="الترجمة (عربي)" onkeypress="handleWordAdd(event)">
             <button onclick="addWord()">إضافة للقاعدة <i class="fas fa-plus"></i></button>
             <div style="margin-top:15px; font-size: 0.85rem; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
-                <p>عدد المتصلين الآن: <strong id="onlineCount">42</strong></p>
-                <p>حالة النظام: <span style="color:green">نشط سحابياً</span></p>
+                <p>حالة النظام: <span style="color:green">متصل بالسحاب</span></p>
             </div>
             <button onclick="closeAdmin()" style="background:#666; margin-top:5px;">إغلاق</button>
         </div>
     </div>
 
     <script>
-        // --- إعدادات Firebase (ضع بياناتك هنا) ---
+        // --- إعدادات Firebase الخاصة بك ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAse2_VyhcdVBsQWrgz66bsMFbjvxzND-g",
+            authDomain: "damascus-airport.firebaseapp.com",
+            databaseURL: "https://damascus-airport-default-rtdb.firebaseio.com",
+            projectId: "damascus-airport",
+            storageBucket: "damascus-airport.firebasestorage.app",
+            messagingSenderId: "1060753600565",
+            appId: "1:1060753600565:web:d008c239c3f54b291ac17c"
         };
 
         // تهيئة Firebase
@@ -250,7 +249,7 @@
         let isAdmin = false;
         const ADMIN_PASS = "amjadalrefaay.xx";
 
-        // وظيفة جلب البيانات الحية (تحدث القائمة عند الجميع فوراً)
+        // وظيفة جلب البيانات الحية من Firebase
         db.ref('words').on('value', (snapshot) => {
             const data = snapshot.val();
             dictionary = [];
@@ -374,7 +373,7 @@
 
         function handleWordAdd(e) { if(e.key === 'Enter') addWord(); }
 
-        // إضافة الكلمة للسحاب (Firebase) لتظهر عند الجميع
+        // إضافة الكلمة إلى Firebase
         function addWord() {
             const en = document.getElementById('newEn').value;
             const ar = document.getElementById('newAr').value;
@@ -390,7 +389,7 @@
             }
         }
 
-        // حذف الكلمة من السحاب (Firebase)
+        // حذف الكلمة من Firebase
         function deleteWord(id) {
             if(confirm("هل أنت متأكد من حذف هذه الكلمة؟")) {
                 db.ref('words/' + id).remove();
