@@ -423,7 +423,10 @@
                 { en: "went", ar: "ذهبتُ (ماضي)" }
             ];
 
-            // فحص إذا كانت البيانات موجودة مسبقاً لتجنب التكرار العشوائي
+            // عرض الكلمات مباشرة في القائمة عند فتح الموقع
+            displayWords(wordsToImport);
+
+            // فحص إذا كانت البيانات موجودة مسبقاً في Firebase
             db.ref('words').once('value', snapshot => {
                 if (!snapshot.exists() || snapshot.numChildren() < 10) {
                     wordsToImport.forEach(item => {
