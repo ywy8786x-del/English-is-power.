@@ -267,7 +267,33 @@
     </div>
 
     <div class="menu-btn" id="menuBtn" onclick="toggleMenu(event)"><i class="fas fa-plane-departure"></i></div>
+<div id="gameOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 44, 34, 0.98); z-index: 6000; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(10px);">
+    <i class="fas fa-times-circle" onclick="closeGame()" style="position: absolute; top: 30px; left: 30px; color: #fbbf24; font-size: 2.5rem; cursor: pointer;"></i>
+    
+    <div style="background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 20px; border: 2px solid #fbbf24; width: 85%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <h2 style="color: #fbbf24;"><i class="fas fa-vial"></i> إختبار اللغة الإنجليزية</h2>
+        
+        <div id="gameContent">
+            </div>
 
+        <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 20px 0;">
+        
+        <div style="display: flex; justify-content: space-around; font-size: 1.1rem; color: white; font-weight: bold;">
+            <span>الدرجة: <span id="gameScore" style="color: #10b981;">0</span></span>
+            <span>السؤال: <span id="gameLevel" style="color: #fbbf24;">1</span> / 50</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* تنسيق أزرار الخيارات */
+    .game-btn {
+        background: #10b981; color: white; border: none; padding: 12px 20px;
+        margin: 8px; border-radius: 12px; cursor: pointer; font-weight: bold;
+        width: 100%; transition: 0.3s; font-family: 'Segoe UI', sans-serif; font-size: 1rem;
+    }
+    .game-btn:hover { background: #fbbf24; color: #064e3b; transform: scale(1.05); }
+</style>
     <div id="sideMenu" class="side-menu">
         <a href="https://wa.me/qr/NBDQM2NOF2WFH1" target="_blank"><i class="fab fa-whatsapp"></i> التواصل مع المطور</a>
         <a href="#" onclick="showAdmin()"><i class="fas fa-user-shield"></i> لوحة التحكم Admin</a>
@@ -627,6 +653,103 @@
         }
 
         displayWords(dictionary);
+        // --- محرك الإختبار: 50 سؤال | 2 نقطة لكل سؤال | صوت ---
+let score = 0;
+let questionCount = 0;
+const totalQuestions = 50;
+let usedWords = []; // لمنع تكرار الكلمات في نفس الاختبار
+
+function openGame() {
+    const overlay = document.getElementById('gameOverlay');
+    if(overlay) {
+        overlay.style.display = 'flex';
+        resetTest();
+    }
+}
+
+function closeGame() {
+    document.getElementById('gameOverlay').style.display = 'none';
+}
+
+function resetTest() {
+    score = 0;
+    questionCount = 0;
+    usedWords = [];
+    updateStats();
+    nextQuestion();
+}
+
+function updateStats() {
+    document.getElementById('gameScore').innerText = score;
+    document.getElementById('gameLevel').innerText = (questionCount + 1) > totalQuestions ? totalQuestions : (questionCount + 1);
+}
+
+function speakWord(text) {
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = 'en-US';
+    msg.rate = 0.8;
+    window.speechSynthesis.speak(msg);
+}
+
+function nextQuestion() {
+    if (questionCount < totalQuestions) {
+        // اختيار كلمة لم تُستخدم بعد إذا أمكن
+        let availableWords = dictionary.filter(w => !usedWords.includes(w.id));
+        if (availableWords.length === 0) { usedWords = []; availableWords = dictionary; }
+        
+        const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+        usedWords.push(randomWord.id);
+
+        const gameContent = document.getElementById('gameContent');
+        gameContent.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <button onclick="speakWord('${randomWord.en}')" style="background: #fbbf24; border: none; border-radius: 50%; width: 55px; height: 55px; cursor: pointer; font-size: 1.4rem; color: #064e3b; margin-bottom: 10px;">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <p style="font-size: 1.4rem; font-weight: bold; color: white; margin: 10px 0;">ما معنى: "${randomWord.en}"؟</p>
+            </div>
+            <div id="gameOptions"></div>
+        `;
+
+        speakWord(randomWord.en);
+
+        let options = [randomWord.ar];
+        while(options.length < 3) {
+            let r = dictionary[Math.floor(Math.random() * dictionary.length)].ar;
+            if(!options.includes(r)) options.push(r);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        const optionsDiv = document.getElementById('gameOptions');
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'game-btn';
+            btn.innerText = opt;
+            btn.onclick = () => {
+                if(opt === randomWord.ar) { score += 2; }
+                questionCount++;
+                updateStats();
+                if (questionCount < totalQuestions) nextQuestion(); else showFinalResult();
+            };
+            optionsDiv.appendChild(btn);
+        });
+    } else {
+        showFinalResult();
+    }
+}
+
+function showFinalResult() {
+    const gameContent = document.getElementById('gameContent');
+    gameContent.innerHTML = `
+        <div style="padding: 10px;">
+            <i class="fas fa-trophy" style="font-size: 3.5rem; color: #fbbf24; margin-bottom: 10px;"></i>
+            <h2 style="color: white;">انتهى الإختبار</h2>
+            <div style="font-size: 4rem; font-weight: bold; color: #10b981; margin: 10px 0;">${score}/100</div>
+            <p style="color: white; font-size: 1.1rem;">${score >= 50 ? "أحسنت يا بطل! ✈️" : "راجع كلماتك وحاول مجدداً 📚"}</p>
+            <button onclick="resetTest()" class="game-btn" style="background: #fbbf24; color: #064e3b; margin-top: 20px;">إعادة الإختبار</button>
+        </div>
+    `;
+}
     </script>
 </body>
 </html>
